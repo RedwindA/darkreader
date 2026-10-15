@@ -55,6 +55,8 @@ describe('FIXES', () => {
             '<img class="logo">',
             '<img class="filtered">',
             '<img class="layered">',
+            '<div class="bg-image" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)"></div>',
+            '<div class="bg-container" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)">Text</div>',
         );
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
         expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('none');
@@ -74,6 +76,8 @@ describe('FIXES', () => {
         expect(getComputedStyle(container.querySelector('.logo')!).filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
         expect(getComputedStyle(container.querySelector('.filtered')!).filter).toBe('grayscale(1)');
         expect(getComputedStyle(container.querySelector('.layered')!).filter).toBe('blur(1px)');
+        expect(getComputedStyle(container.querySelector('.bg-image')!).filter).toBe('brightness(0.7)');
+        expect(getComputedStyle(container.querySelector('.bg-container')!).filter).toBe('none');
     });
 
     it('should insert CSS', async () => {

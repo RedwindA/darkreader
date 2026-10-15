@@ -176,9 +176,11 @@ function getInversionStyleValue(): string {
     const rules: string[] = [];
 
     if (theme.imageBrightness < 100) {
-        // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence
+        // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence.
+        // Empty elements with an inline background image are image boxes (e.g. x.com media and avatars),
+        // non-empty ones are skipped to avoid dimming their content.
         const imageRule = [
-            ':where(img) {',
+            ':where(img, [style*="background"][style*="url("]:empty) {',
             `    filter: brightness(${theme.imageBrightness}%);`,
             '}',
         ];
