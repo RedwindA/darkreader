@@ -15,6 +15,7 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
                 mode: 1,
                 brightness: 110,
                 imageBrightness: 100,
+                dimImagesOnly: false,
                 contrast: 90,
                 grayscale: 20,
                 sepia: 10,

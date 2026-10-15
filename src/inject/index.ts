@@ -9,7 +9,8 @@ import {writeEnabledForHost} from './cache';
 import {runDarkThemeDetector, stopDarkThemeDetector} from './detector';
 import {createOrUpdateDynamicTheme, removeDynamicTheme, cleanDynamicThemeCache} from './dynamic-theme';
 import {collectCSS} from './dynamic-theme/css-collection';
-import {createOrUpdateStyle, removeStyle} from './style';
+import {getImageBrightnessStyle} from './image-brightness';
+import {createOrUpdateImageStyle, createOrUpdateStyle, removeImageStyle, removeStyle} from './style';
 import {createOrUpdateSVGFilter, removeSVGFilter} from './svg-filter';
 import {logWarn, logInfoCollapsed} from './utils/log';
 
@@ -113,6 +114,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         case MessageTypeBGtoCS.ADD_CSS_FILTER:
         case MessageTypeBGtoCS.ADD_STATIC_THEME: {
             const {css, detectDarkTheme, detectorHints} = message.data;
+            removeImageStyle();
             removeDynamicTheme();
             createOrUpdateStyle(css, message.type === MessageTypeBGtoCS.ADD_STATIC_THEME ? 'static' : 'filter');
             writeEnabledForHost(true);
@@ -128,6 +130,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         }
         case MessageTypeBGtoCS.ADD_SVG_FILTER: {
             const {css, svgMatrix, svgReverseMatrix, detectDarkTheme, detectorHints} = message.data;
+            removeImageStyle();
             removeDynamicTheme();
             createOrUpdateSVGFilter(svgMatrix, svgReverseMatrix);
             createOrUpdateStyle(css, 'filter');
@@ -145,6 +148,23 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         }
         case MessageTypeBGtoCS.ADD_DYNAMIC_THEME: {
             const {theme, fixes, isIFrame, detectDarkTheme, detectorHints} = message.data;
+            if (theme.dimImagesOnly) {
+                // Keep the site's own colors, only dim the images
+                removeStyle();
+                removeSVGFilter();
+                removeDynamicTheme();
+                stopDarkThemeDetector();
+                const css = getImageBrightnessStyle(theme, fixes?.invert ?? [], location.hostname);
+                if (css) {
+                    createOrUpdateImageStyle(css);
+                } else {
+                    removeImageStyle();
+                }
+                // Not cached as enabled, so that no dark fallback style is applied on the next load
+                writeEnabledForHost(false);
+                break;
+            }
+            removeImageStyle();
             removeStyle();
             createOrUpdateDynamicTheme(theme, fixes, isIFrame);
             writeEnabledForHost(true);
@@ -168,6 +188,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
             break;
         case MessageTypeBGtoCS.UNSUPPORTED_SENDER:
         case MessageTypeBGtoCS.CLEAN_UP:
+            removeImageStyle();
             removeStyle();
             removeSVGFilter();
             removeDynamicTheme();

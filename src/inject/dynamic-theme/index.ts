@@ -4,11 +4,12 @@ import {createTextStyle} from '../../generators/text-style';
 import {forEach, push, toArray} from '../../utils/array';
 import {clearColorCache, getSRGBLightness, parseColorWithCache} from '../../utils/color';
 import {clamp} from '../../utils/math';
-import {isChromium, isEdge, isFirefox, isLayerRuleSupported, isMobile} from '../../utils/platform';
+import {isChromium, isEdge, isFirefox, isMobile} from '../../utils/platform';
 import {throttle} from '../../utils/throttle';
 import {generateUID} from '../../utils/uid';
 import {parsedURLCache} from '../../utils/url';
 import {setDocumentVisibilityListener, documentIsVisible, removeDocumentVisibilityListener} from '../../utils/visibility';
+import {getImageBrightnessStyle} from '../image-brightness';
 import {removeNode, watchForNodePosition, iterateShadowHosts, isDOMReady, removeDOMReadyListener, cleanReadyStateCompleteListeners, addDOMReadyListener, setIsDOMReady} from '../utils/dom';
 import {logInfo, logWarn} from '../utils/log';
 
@@ -175,32 +176,9 @@ function getInversionStyleValue(): string {
 
     const rules: string[] = [];
 
-    if (theme.imageBrightness < 100) {
-        // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence.
-        // Empty elements with an inline background image are image boxes (e.g. x.com media and avatars),
-        // non-empty ones and form controls (always :empty) are skipped to avoid dimming their content.
-        const bgImageBox = '[style*="background"][style*="url("]:empty:not(input, textarea, select)';
-        // Not "backdrop-filter" or a URL containing "filter"
-        const inlineFilter = ':is([style^="filter"], [style*=" filter"], [style*=";filter"])';
-        // Forgiving :is() so that an unsupported fix selector doesn't drop the rule
-        const invertSelectors = fixes?.invert?.filter(Boolean) ?? [];
-        const notInverted = invertSelectors.length > 0 ? `:not(:is(${invertSelectors.join(', ')}))` : '';
-        const imageRule = [
-            `:where(img, ${bgImageBox}) {`,
-            `    filter: brightness(${theme.imageBrightness}%);`,
-            '}',
-            // An inline filter (e.g. x.com media has "filter: brightness(1)") overrides the one above,
-            // so such boxes are dimmed with a black overlay instead, which also keeps the page's own filter.
-            // Inverted elements are skipped, as the overlay would be inverted too.
-            `:where(${bgImageBox}${inlineFilter}${notInverted}) {`,
-            `    box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, ${(100 - theme.imageBrightness) / 100});`,
-            '}',
-        ];
-        if (isLayerRuleSupported) {
-            imageRule.unshift('@layer {');
-            imageRule.push('}');
-        }
-        rules.push(imageRule.join('\n'));
+    const imageBrightnessStyle = getImageBrightnessStyle(theme, fixes?.invert ?? [], location.hostname);
+    if (imageBrightnessStyle) {
+        rules.push(imageBrightnessStyle);
     }
 
     const appendRule = (selectors: string[], filter: string | null) => {

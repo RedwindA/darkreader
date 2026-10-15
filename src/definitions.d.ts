@@ -56,6 +56,7 @@ export interface Theme {
     mode: FilterMode;
     brightness: number;
     imageBrightness: number;
+    dimImagesOnly: boolean;
     contrast: number;
     grayscale: number;
     sepia: number;

@@ -1,6 +1,7 @@
 import {m} from 'malevic';
 
 import type {ExtWrapper, Theme} from '../../../../definitions';
+import {ThemeEngine} from '../../../../generators/theme-engines';
 import {getLocalMessage} from '../../../../utils/locales';
 import {isFirefox} from '../../../../utils/platform';
 import {isURLInList} from '../../../../utils/url';
@@ -37,6 +38,19 @@ export default function MoreSettings({data, actions, fonts}: ExtWrapper & {fonts
             <div class="more-settings__section">
                 <EngineSwitch engine={theme.engine} onChange={(engine) => setConfig({engine})} />
             </div>
+            {theme.engine === ThemeEngine.dynamicTheme ? (
+                <div class="more-settings__section">
+                    <Toggle
+                        checked={theme.dimImagesOnly}
+                        labelOn={getLocalMessage('dim_images_only')}
+                        labelOff={getLocalMessage('full_theme')}
+                        onChange={(checked) => setConfig({dimImagesOnly: checked})}
+                    />
+                    <p class="more-settings__description">
+                        {getLocalMessage('dim_images_only_description')}
+                    </p>
+                </div>
+            ) : null}
             <div class="more-settings__section">
                 <CustomSettingsToggle data={data} actions={actions} />
                 {tab.isProtected ? (

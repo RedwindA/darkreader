@@ -1,16 +1,16 @@
 import {createNodeAsap, removeNode} from './utils/dom';
 
-export function createOrUpdateStyle(css: string, type: string): void {
+function createOrUpdateStyleElement(id: string, css: string, prepend: boolean, onCreate?: () => void): void {
     createNodeAsap({
-        selectNode: () => document.getElementById('dark-reader-style')!,
+        selectNode: () => document.getElementById(id)!,
         createNode: (target) => {
-            document.documentElement.setAttribute('data-darkreader-mode', type);
+            onCreate?.();
             const style = document.createElement('style');
-            style.id = 'dark-reader-style';
+            style.id = id;
             style.classList.add('darkreader');
             style.type = 'text/css';
             style.textContent = css;
-            target.appendChild(style);
+            target.insertBefore(style, prepend ? target.firstChild : null);
         },
         updateNode: (existing) => {
             if (css.replace(/^\s+/gm, '') !== existing.textContent!.replace(/^\s+/gm, '')) {
@@ -27,7 +27,21 @@ export function createOrUpdateStyle(css: string, type: string): void {
     });
 }
 
+export function createOrUpdateStyle(css: string, type: string): void {
+    createOrUpdateStyleElement('dark-reader-style', css, false, () => document.documentElement.setAttribute('data-darkreader-mode', type));
+}
+
 export function removeStyle(): void {
     removeNode(document.getElementById('dark-reader-style'));
     document.documentElement.removeAttribute('data-darkreader-mode');
+}
+
+// Placed first, so that its anonymous layer has the lowest priority.
+// No "data-darkreader-mode" attribute, as the site's own colors are kept.
+export function createOrUpdateImageStyle(css: string): void {
+    createOrUpdateStyleElement('dark-reader-image-style', css, true);
+}
+
+export function removeImageStyle(): void {
+    removeNode(document.getElementById('dark-reader-image-style'));
 }
