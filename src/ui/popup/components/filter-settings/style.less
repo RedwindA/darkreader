@@ -4,7 +4,14 @@
     align-items: stretch;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
     width: 100%;
+
+    > * {
+        flex-shrink: 0;
+    }
 
     > :not(:first-child) {
         margin-top: @indent-small;
@@ -13,7 +20,7 @@
     &__content {
         align-items: center;
         display: flex;
-        flex: auto;
+        flex: 1 0 auto;
         flex-direction: column;
         justify-content: center;
     }
