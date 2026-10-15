@@ -179,9 +179,15 @@ function getInversionStyleValue(): string {
         // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence.
         // Empty elements with an inline background image are image boxes (e.g. x.com media and avatars),
         // non-empty ones and form controls (always :empty) are skipped to avoid dimming their content.
+        const bgImageBox = '[style*="background"][style*="url("]:empty:not(input, textarea, select)';
         const imageRule = [
-            ':where(img, [style*="background"][style*="url("]:empty:not(input, textarea, select)) {',
+            `:where(img, ${bgImageBox}) {`,
             `    filter: brightness(${theme.imageBrightness}%);`,
+            '}',
+            // An inline filter (e.g. x.com media has "filter: brightness(1)") overrides the one above,
+            // so such boxes are dimmed with a black overlay instead, which also keeps the page's own filter
+            `:where(${bgImageBox}[style*="filter"]) {`,
+            `    box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, ${(100 - theme.imageBrightness) / 100});`,
             '}',
         ];
         if (isLayerRuleSupported) {
