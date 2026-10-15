@@ -2,8 +2,8 @@ import './support/polyfills';
 import {DEFAULT_THEME} from '../../src/defaults';
 import {collectCSS} from '../../src/inject/dynamic-theme/css-collection';
 import {getImageBrightnessStyle} from '../../src/inject/image-brightness';
-import {createOrUpdateImageStyle, removeImageStyle} from '../../src/inject/style';
-import {multiline} from './support/test-utils';
+import {applyImageDimming, removeImageDimming} from '../../src/inject/image-dimming';
+import {multiline, timeout} from './support/test-utils';
 
 describe('IMAGE BRIGHTNESS', () => {
     let container: HTMLElement;
@@ -44,12 +44,49 @@ describe('IMAGE BRIGHTNESS', () => {
     });
 
     it('should add the image style for screen only and include it in exported CSS', async () => {
-        createOrUpdateImageStyle(getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com'));
+        applyImageDimming(getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com'));
         const imageStyle = document.getElementById('dark-reader-image-style') as HTMLStyleElement;
         expect(imageStyle.media).toBe('screen');
+        expect(imageStyle.parentElement).toBe(document.head);
         expect(document.documentElement.hasAttribute('data-darkreader-mode')).toBe(false);
         expect(await collectCSS()).toContain('brightness(70%)');
-        removeImageStyle();
+        removeImageDimming();
         expect(document.getElementById('dark-reader-image-style')).toBe(null);
+    });
+
+    it('should respect darkreader-lock', async () => {
+        const css = getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com');
+        const lock = document.createElement('meta');
+        lock.name = 'darkreader-lock';
+
+        document.head.append(lock);
+        applyImageDimming(css);
+        expect(document.getElementById('dark-reader-image-style')).toBe(null);
+        lock.remove();
+
+        applyImageDimming(css);
+        expect(document.getElementById('dark-reader-image-style')).not.toBe(null);
+        document.head.append(lock);
+        await timeout(0);
+        expect(document.getElementById('dark-reader-image-style')).toBe(null);
+        lock.remove();
+        removeImageDimming();
+    });
+
+    it('should not add the image style after removal while waiting for head', async () => {
+        const head = document.head;
+        head.remove();
+        applyImageDimming(getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com'));
+        removeImageDimming();
+        document.documentElement.prepend(head);
+        await timeout(0);
+        expect(document.getElementById('dark-reader-image-style')).toBe(null);
+
+        head.remove();
+        applyImageDimming(getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com'));
+        document.documentElement.prepend(head);
+        await timeout(0);
+        expect(document.getElementById('dark-reader-image-style')?.parentElement).toBe(head);
+        removeImageDimming();
     });
 });
