@@ -1,6 +1,8 @@
 import './support/polyfills';
 import {DEFAULT_THEME} from '../../src/defaults';
+import {collectCSS} from '../../src/inject/dynamic-theme/css-collection';
 import {getImageBrightnessStyle} from '../../src/inject/image-brightness';
+import {createOrUpdateImageStyle, removeImageStyle} from '../../src/inject/style';
 import {multiline} from './support/test-utils';
 
 describe('IMAGE BRIGHTNESS', () => {
@@ -39,5 +41,15 @@ describe('IMAGE BRIGHTNESS', () => {
 
         style.textContent = getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com');
         expect(getComputedStyle(container.querySelector('.avatar')!).filter).toBe('brightness(0.7)');
+    });
+
+    it('should add the image style for screen only and include it in exported CSS', async () => {
+        createOrUpdateImageStyle(getImageBrightnessStyle({...DEFAULT_THEME, imageBrightness: 70}, [], 'example.com'));
+        const imageStyle = document.getElementById('dark-reader-image-style') as HTMLStyleElement;
+        expect(imageStyle.media).toBe('screen');
+        expect(document.documentElement.hasAttribute('data-darkreader-mode')).toBe(false);
+        expect(await collectCSS()).toContain('brightness(70%)');
+        removeImageStyle();
+        expect(document.getElementById('dark-reader-image-style')).toBe(null);
     });
 });

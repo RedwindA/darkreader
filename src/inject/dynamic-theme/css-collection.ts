@@ -56,6 +56,7 @@ export async function collectCSS(): Promise<string> {
     addStaticCSS('.darkreader--text', 'Text Style');
     addStaticCSS('.darkreader--invert', 'Invert Style');
     addStaticCSS('.darkreader--variables', 'Variables Style');
+    addStaticCSS('#dark-reader-image-style', 'Image Style');
 
     const modifiedCSS: string[] = [];
     (document.querySelectorAll('.darkreader--sync') as NodeListOf<HTMLStyleElement>).forEach((element) => {

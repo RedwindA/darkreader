@@ -1,6 +1,6 @@
 import {createNodeAsap, removeNode} from './utils/dom';
 
-function createOrUpdateStyleElement(id: string, css: string, prepend: boolean, onCreate?: () => void): void {
+function createOrUpdateStyleElement(id: string, css: string, prepend: boolean, media: string, onCreate?: () => void): void {
     createNodeAsap({
         selectNode: () => document.getElementById(id)!,
         createNode: (target) => {
@@ -9,6 +9,9 @@ function createOrUpdateStyleElement(id: string, css: string, prepend: boolean, o
             style.id = id;
             style.classList.add('darkreader');
             style.type = 'text/css';
+            if (media) {
+                style.media = media;
+            }
             style.textContent = css;
             target.insertBefore(style, prepend ? target.firstChild : null);
         },
@@ -28,7 +31,7 @@ function createOrUpdateStyleElement(id: string, css: string, prepend: boolean, o
 }
 
 export function createOrUpdateStyle(css: string, type: string): void {
-    createOrUpdateStyleElement('dark-reader-style', css, false, () => document.documentElement.setAttribute('data-darkreader-mode', type));
+    createOrUpdateStyleElement('dark-reader-style', css, false, '', () => document.documentElement.setAttribute('data-darkreader-mode', type));
 }
 
 export function removeStyle(): void {
@@ -36,10 +39,10 @@ export function removeStyle(): void {
     document.documentElement.removeAttribute('data-darkreader-mode');
 }
 
-// Placed first, so that its anonymous layer has the lowest priority.
+// Placed first, so that its anonymous layer has the lowest priority. Not applied when printing.
 // No "data-darkreader-mode" attribute, as the site's own colors are kept.
 export function createOrUpdateImageStyle(css: string): void {
-    createOrUpdateStyleElement('dark-reader-image-style', css, true);
+    createOrUpdateStyleElement('dark-reader-image-style', css, true, 'screen');
 }
 
 export function removeImageStyle(): void {

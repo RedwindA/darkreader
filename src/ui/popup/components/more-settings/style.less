@@ -3,7 +3,14 @@
 .more-settings {
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
     width: 100%;
+
+    > * {
+        flex-shrink: 0;
+    }
 
     &__description {
         font-size: @size-text-small;
