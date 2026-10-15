@@ -58,6 +58,8 @@ describe('FIXES', () => {
             '<div class="bg-image" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)"></div>',
             '<div class="bg-container" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)">Text</div>',
             '<div class="bg-filtered" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=); filter: brightness(1)"></div>',
+            '<div class="bg-backdrop" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=); backdrop-filter: blur(1px)"></div>',
+            '<div class="bg-logo" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=); filter: brightness(1)"></div>',
             '<input class="bg-input" value="Search" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)">',
         );
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
@@ -65,7 +67,7 @@ describe('FIXES', () => {
 
         const fixes: DynamicThemeFix[] = [{
             url: ['*'],
-            invert: ['.logo'],
+            invert: ['.logo', '.bg-logo'],
             css: '',
             ignoreInlineStyle: [],
             ignoreImageAnalysis: [],
@@ -85,6 +87,10 @@ describe('FIXES', () => {
         const bgFiltered = getComputedStyle(container.querySelector('.bg-filtered')!);
         expect(bgFiltered.filter).toBe('brightness(1)');
         expect(bgFiltered.boxShadow).toMatch(/^rgba\(0, 0, 0, 0\.3\) 0px 0px 0px \d+px inset$/);
+        const bgBackdrop = getComputedStyle(container.querySelector('.bg-backdrop')!);
+        expect(bgBackdrop.filter).toBe('brightness(0.7)');
+        expect(bgBackdrop.boxShadow).toBe('none');
+        expect(getComputedStyle(container.querySelector('.bg-logo')!).boxShadow).toBe('none');
     });
 
     it('should insert CSS', async () => {

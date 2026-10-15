@@ -180,13 +180,19 @@ function getInversionStyleValue(): string {
         // Empty elements with an inline background image are image boxes (e.g. x.com media and avatars),
         // non-empty ones and form controls (always :empty) are skipped to avoid dimming their content.
         const bgImageBox = '[style*="background"][style*="url("]:empty:not(input, textarea, select)';
+        // Not "backdrop-filter" or a URL containing "filter"
+        const inlineFilter = ':is([style^="filter"], [style*=" filter"], [style*=";filter"])';
+        // Forgiving :is() so that an unsupported fix selector doesn't drop the rule
+        const invertSelectors = fixes?.invert?.filter(Boolean) ?? [];
+        const notInverted = invertSelectors.length > 0 ? `:not(:is(${invertSelectors.join(', ')}))` : '';
         const imageRule = [
             `:where(img, ${bgImageBox}) {`,
             `    filter: brightness(${theme.imageBrightness}%);`,
             '}',
             // An inline filter (e.g. x.com media has "filter: brightness(1)") overrides the one above,
-            // so such boxes are dimmed with a black overlay instead, which also keeps the page's own filter
-            `:where(${bgImageBox}[style*="filter"]) {`,
+            // so such boxes are dimmed with a black overlay instead, which also keeps the page's own filter.
+            // Inverted elements are skipped, as the overlay would be inverted too.
+            `:where(${bgImageBox}${inlineFilter}${notInverted}) {`,
             `    box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, ${(100 - theme.imageBrightness) / 100});`,
             '}',
         ];
