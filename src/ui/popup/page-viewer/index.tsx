@@ -11,7 +11,7 @@ interface PageProps {
 
 export function Page(props: PageProps, content: Malevic.Spec) {
     return (
-        <div class={{'page': true, 'page--active': props.active}}>
+        <div class={{'page': true, 'page--active': props.active, 'page--nested': !props.first}}>
             <div class="page__content">
                 {content}
             </div>

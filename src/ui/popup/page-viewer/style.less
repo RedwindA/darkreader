@@ -21,6 +21,14 @@
         display: flex;
     }
 
+    &--nested .page__content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
     &__back-button {
         background-image: @icon-left;
         background-position: center left 0.25rem;
