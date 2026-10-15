@@ -57,6 +57,7 @@ describe('FIXES', () => {
             '<img class="layered">',
             '<div class="bg-image" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)"></div>',
             '<div class="bg-container" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)">Text</div>',
+            '<input class="bg-input" value="Search" style="background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=)">',
         );
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
         expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('none');
@@ -78,6 +79,7 @@ describe('FIXES', () => {
         expect(getComputedStyle(container.querySelector('.layered')!).filter).toBe('blur(1px)');
         expect(getComputedStyle(container.querySelector('.bg-image')!).filter).toBe('brightness(0.7)');
         expect(getComputedStyle(container.querySelector('.bg-container')!).filter).toBe('none');
+        expect(getComputedStyle(container.querySelector('.bg-input')!).filter).toBe('none');
     });
 
     it('should insert CSS', async () => {

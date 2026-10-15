@@ -24,17 +24,21 @@ export default class UserStorage {
     }
 
     private static fillDefaults(settings: UserSettings) {
-        settings.theme = {...DEFAULT_THEME, ...settings.theme};
+        UserStorage.fillThemeDefaults(settings);
         settings.time = {...DEFAULT_SETTINGS.time, ...settings.time};
+        if (settings.customThemes.length === 0) {
+            settings.customThemes = DEFAULT_SETTINGS.customThemes;
+        }
+    }
+
+    private static fillThemeDefaults(settings: UserSettings) {
+        settings.theme = {...DEFAULT_THEME, ...settings.theme};
         settings.presets.forEach((preset) => {
             preset.theme = {...DEFAULT_THEME, ...preset.theme};
         });
         settings.customThemes.forEach((site) => {
             site.theme = {...DEFAULT_THEME, ...site.theme};
         });
-        if (settings.customThemes.length === 0) {
-            settings.customThemes = DEFAULT_SETTINGS.customThemes;
-        }
     }
 
     // migrateAutomationSettings migrates old automation settings to the new interface.
@@ -234,6 +238,10 @@ export default class UserStorage {
 
         const {enabledFor, disabledFor} = $settings;
         const updatedSettings = {...UserStorage.settings, ...$settings};
+        // Themes may come from settings exported by an older version (e.g. on import)
+        if ($settings.theme || $settings.presets || $settings.customThemes) {
+            UserStorage.fillThemeDefaults(updatedSettings);
+        }
         if (enabledFor) {
             updatedSettings.enabledFor = filterSiteList(enabledFor);
         }

@@ -178,9 +178,9 @@ function getInversionStyleValue(): string {
     if (theme.imageBrightness < 100) {
         // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence.
         // Empty elements with an inline background image are image boxes (e.g. x.com media and avatars),
-        // non-empty ones are skipped to avoid dimming their content.
+        // non-empty ones and form controls (always :empty) are skipped to avoid dimming their content.
         const imageRule = [
-            ':where(img, [style*="background"][style*="url("]:empty) {',
+            ':where(img, [style*="background"][style*="url("]:empty:not(input, textarea, select)) {',
             `    filter: brightness(${theme.imageBrightness}%);`,
             '}',
         ];
