@@ -54,6 +54,11 @@ declare namespace DarkReader {
          */
         brightness: number;
         /**
+         * Image brightness in Dynamic mode (0 - 100).
+         * Default 100.
+         */
+        imageBrightness: number;
+        /**
          * Contrast (0 - 100+).
          * Default 100.
          */

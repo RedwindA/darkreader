@@ -1,6 +1,7 @@
 import {m} from 'malevic';
 
 import type {ExtWrapper, Theme} from '../../../../definitions';
+import {ThemeEngine} from '../../../../generators/theme-engines';
 import {getLocalMessage} from '../../../../utils/locales';
 import {isURLInList} from '../../../../utils/url';
 import {UpDown} from '../../../controls';
@@ -32,6 +33,18 @@ export default function FilterSettings({data, actions}: ExtWrapper, ...children:
             onChange={(value) => setConfig({brightness: value})}
         />
     );
+
+    const imageBrightness = theme.engine === ThemeEngine.dynamicTheme ? (
+        <UpDown
+            value={theme.imageBrightness}
+            min={10}
+            max={100}
+            step={5}
+            default={100}
+            name={getLocalMessage('image_brightness')}
+            onChange={(value) => setConfig({imageBrightness: value})}
+        />
+    ) : null;
 
     const contrast = (
         <UpDown
@@ -73,6 +86,7 @@ export default function FilterSettings({data, actions}: ExtWrapper, ...children:
         <section class="filter-settings">
             <ModeToggle mode={theme.mode} onChange={(mode) => setConfig({mode})} />
             {brightness}
+            {imageBrightness}
             {contrast}
             {sepia}
             {grayscale}

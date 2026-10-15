@@ -52,6 +52,20 @@ describe('SHADOW DOM', () => {
         expect((testCase.nextElementSibling as HTMLStyleElement).sheet!.cssRules.length).toBe(2);
     });
 
+    it('should remove image brightness from shadow roots', async () => {
+        container.innerHTML = multiline(
+            '<div class="shadow-dom-wrapper"></div>',
+        );
+        const shadowRoot = document.querySelector('.shadow-dom-wrapper')!.attachShadow({mode: 'open'});
+        shadowRoot.innerHTML = '<img>';
+        createOrUpdateDynamicTheme({...theme, imageBrightness: 70}, null, false);
+        expect(getComputedStyle(shadowRoot.querySelector('img')!).filter).toBe('brightness(0.7)');
+
+        removeDynamicTheme();
+        expect(shadowRoot.querySelector('.darkreader--invert')).toBe(null);
+        expect(getComputedStyle(shadowRoot.querySelector('img')!).filter).toBe('none');
+    });
+
     it('should react to DOM changes', async () => {
         container.innerHTML = multiline(
             '<div class="shadow-dom-wrapper"></div>',

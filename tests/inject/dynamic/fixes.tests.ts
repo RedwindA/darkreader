@@ -50,9 +50,11 @@ describe('FIXES', () => {
     it('should apply image brightness', async () => {
         container.innerHTML = multiline(
             '<style>.filtered { filter: grayscale(1); }</style>',
+            '<style>@layer utilities { .layered { filter: blur(1px); } }</style>',
             '<img class="plain">',
             '<img class="logo">',
             '<img class="filtered">',
+            '<img class="layered">',
         );
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
         expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('none');
@@ -71,6 +73,7 @@ describe('FIXES', () => {
         expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('brightness(0.7)');
         expect(getComputedStyle(container.querySelector('.logo')!).filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
         expect(getComputedStyle(container.querySelector('.filtered')!).filter).toBe('grayscale(1)');
+        expect(getComputedStyle(container.querySelector('.layered')!).filter).toBe('blur(1px)');
     });
 
     it('should insert CSS', async () => {

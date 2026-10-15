@@ -4,7 +4,7 @@ import {createTextStyle} from '../../generators/text-style';
 import {forEach, push, toArray} from '../../utils/array';
 import {clearColorCache, getSRGBLightness, parseColorWithCache} from '../../utils/color';
 import {clamp} from '../../utils/math';
-import {isChromium, isEdge, isFirefox, isMobile} from '../../utils/platform';
+import {isChromium, isEdge, isFirefox, isLayerRuleSupported, isMobile} from '../../utils/platform';
 import {throttle} from '../../utils/throttle';
 import {generateUID} from '../../utils/uid';
 import {parsedURLCache} from '../../utils/url';
@@ -176,12 +176,17 @@ function getInversionStyleValue(): string {
     const rules: string[] = [];
 
     if (theme.imageBrightness < 100) {
-        // Not !important and zero specificity, so that page filters and inversion fixes take precedence
-        rules.push([
+        // Lowest priority, so that page filters (including layered ones) and inversion fixes take precedence
+        const imageRule = [
             ':where(img) {',
             `    filter: brightness(${theme.imageBrightness}%);`,
             '}',
-        ].join('\n'));
+        ];
+        if (isLayerRuleSupported) {
+            imageRule.unshift('@layer {');
+            imageRule.push('}');
+        }
+        rules.push(imageRule.join('\n'));
     }
 
     const appendRule = (selectors: string[], filter: string | null) => {
@@ -989,6 +994,7 @@ export function removeDynamicTheme(): void {
     shadowRootsWithOverrides.forEach((root) => {
         removeNode(root.querySelector('.darkreader--inline'));
         removeNode(root.querySelector('.darkreader--override'));
+        removeNode(root.querySelector('.darkreader--invert'));
     });
     shadowRootsWithOverrides.clear();
     forEach(styleManagers.keys(), (el) => removeManager(el));
