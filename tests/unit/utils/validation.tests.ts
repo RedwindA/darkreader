@@ -24,6 +24,7 @@ test('Settings Validation', () => {
     const wonkyTheme = {
         mode: 'dark',
         brightness: 250,
+        imageBrightness: 150,
         contrast: -50,
         grayscale: false,
         sepia: 105,
@@ -59,6 +60,7 @@ test('Settings Validation', () => {
         theme: {
             mode: 'dark',
             brightness: 250,
+            imageBrightness: 150,
             contrast: -50,
             grayscale: false,
             sepia: 105,
@@ -156,6 +158,7 @@ test('Settings Validation', () => {
         theme: {
             mode: 0,
             brightness: 125,
+            imageBrightness: 80,
             contrast: 50,
             grayscale: 25,
             sepia: 5,

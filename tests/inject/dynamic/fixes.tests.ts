@@ -47,6 +47,32 @@ describe('FIXES', () => {
         expect(getComputedStyle(container.querySelector('.logo')!).filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
     });
 
+    it('should apply image brightness', async () => {
+        container.innerHTML = multiline(
+            '<style>.filtered { filter: grayscale(1); }</style>',
+            '<img class="plain">',
+            '<img class="logo">',
+            '<img class="filtered">',
+        );
+        createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
+        expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('none');
+
+        const fixes: DynamicThemeFix[] = [{
+            url: ['*'],
+            invert: ['.logo'],
+            css: '',
+            ignoreInlineStyle: [],
+            ignoreImageAnalysis: [],
+            ignoreCSSUrl: [],
+            disableStyleSheetsProxy: false,
+            disableCustomElementRegistryProxy: false,
+        }];
+        createOrUpdateDynamicTheme({...DEFAULT_THEME, imageBrightness: 70}, fixes, false);
+        expect(getComputedStyle(container.querySelector('.plain')!).filter).toBe('brightness(0.7)');
+        expect(getComputedStyle(container.querySelector('.logo')!).filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
+        expect(getComputedStyle(container.querySelector('.filtered')!).filter).toBe('grayscale(1)');
+    });
+
     it('should insert CSS', async () => {
         container.innerHTML = multiline(
             '<p class="text">Some text need to be red</p>',

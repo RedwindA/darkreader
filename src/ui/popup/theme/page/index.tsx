@@ -13,6 +13,7 @@ import {
     ExportTheme,
     FontPicker,
     Grayscale,
+    ImageBrightness,
     ImmediateModify,
     Mode,
     ResetButton,
@@ -42,6 +43,12 @@ function MainGroup({theme, change}: ThemeGroupProps) {
                 value={theme.brightness}
                 onChange={(v) => change({brightness: v})}
             />
+            {theme.engine === ThemeEngine.dynamicTheme ? (
+                <ImageBrightness
+                    value={theme.imageBrightness}
+                    onChange={(v) => change({imageBrightness: v})}
+                />
+            ) : null}
             <Contrast
                 value={theme.contrast}
                 onChange={(v) => change({contrast: v})}

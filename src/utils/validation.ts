@@ -201,6 +201,7 @@ export function validateTheme(theme: Partial<Theme> | null | undefined): ThemeVa
     const {validateProperty, errors} = createValidator();
     validateProperty(theme, 'mode', isOneOf(0, 1), DEFAULT_THEME);
     validateProperty(theme, 'brightness', isNumberBetween(0, 200), DEFAULT_THEME);
+    validateProperty(theme, 'imageBrightness', isNumberBetween(0, 100), DEFAULT_THEME);
     validateProperty(theme, 'contrast', isNumberBetween(0, 200), DEFAULT_THEME);
     validateProperty(theme, 'grayscale', isNumberBetween(0, 100), DEFAULT_THEME);
     validateProperty(theme, 'sepia', isNumberBetween(0, 100), DEFAULT_THEME);

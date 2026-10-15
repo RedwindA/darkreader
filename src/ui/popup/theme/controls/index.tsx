@@ -5,6 +5,7 @@ import Contrast from './contrast';
 import {ExportTheme} from './export-theme';
 import FontPicker from './font-picker';
 import Grayscale from './grayscale';
+import ImageBrightness from './image-brightness';
 import ImmediateModify from './immediate-modify';
 import Mode from './mode';
 import ResetButton from './reset-button';
@@ -25,6 +26,7 @@ export {
     ExportTheme,
     FontPicker,
     Grayscale,
+    ImageBrightness,
     ImmediateModify,
     Mode,
     ResetButton,

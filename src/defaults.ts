@@ -22,6 +22,7 @@ export const DEFAULT_COLORS = {
 export const DEFAULT_THEME: Theme = {
     mode: 1,
     brightness: 100,
+    imageBrightness: 100,
     contrast: 100,
     grayscale: 0,
     sepia: 0,

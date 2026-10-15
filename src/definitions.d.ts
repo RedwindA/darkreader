@@ -55,6 +55,7 @@ export type ViewProps = ExtWrapper & {
 export interface Theme {
     mode: FilterMode;
     brightness: number;
+    imageBrightness: number;
     contrast: number;
     grayscale: number;
     sepia: number;

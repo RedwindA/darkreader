@@ -175,6 +175,15 @@ function getInversionStyleValue(): string {
 
     const rules: string[] = [];
 
+    if (theme.imageBrightness < 100) {
+        // Not !important and zero specificity, so that page filters and inversion fixes take precedence
+        rules.push([
+            ':where(img) {',
+            `    filter: brightness(${theme.imageBrightness}%);`,
+            '}',
+        ].join('\n'));
+    }
+
     const appendRule = (selectors: string[], filter: string | null) => {
         if (!filter || selectors.length === 0) {
             return;
