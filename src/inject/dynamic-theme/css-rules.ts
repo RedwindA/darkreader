@@ -43,6 +43,11 @@ export function iterateCSSRules(
             iterateCSSRules(rule.cssRules, iterate, onImportError, importedSheets);
         } else if (isContainerRule(rule)) {
             iterateCSSRules(rule.cssRules, iterate, onImportError, importedSheets);
+        } else if (isKeyframesRule(rule)) {
+            // Keyframe rules have keyText, not selectorText. Visit them directly
+            // so animation colors (for example a comment highlight that fills
+            // forwards to white) are modified with the rest of the sheet.
+            forEach(rule.cssRules, (child) => iterate(child as CSSStyleRule));
         } else {
             logWarn(`CSSRule type not supported`, rule);
         }
@@ -274,6 +279,10 @@ export function isLayerRule(rule: CSSRule | null): rule is CSSLayerBlockRule {
         return true;
     }
     return false;
+}
+
+export function isKeyframesRule(rule: CSSRule | null): rule is CSSKeyframesRule {
+    return !!rule && rule.type === CSSRule.KEYFRAMES_RULE;
 }
 
 export function isContainerRule(rule: CSSRule | null): rule is CSSContainerRule {

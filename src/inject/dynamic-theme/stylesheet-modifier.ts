@@ -2,7 +2,7 @@ import type {Theme} from '../../definitions';
 import {isChromium} from '../../utils/platform';
 import {createAsyncTasksQueue} from '../../utils/throttle';
 
-import {iterateCSSRules, iterateCSSDeclarations, isMediaRule, isLayerRule, isContainerRule, isStyleRule} from './css-rules';
+import {iterateCSSRules, iterateCSSDeclarations, isMediaRule, isLayerRule, isContainerRule, isStyleRule, isKeyframesRule} from './css-rules';
 import {themeCacheKeys} from './modify-colors';
 import type {ModifiableCSSDeclaration, ModifiableCSSRule} from './modify-css';
 import {getModifiableCSSDeclaration} from './modify-css';
@@ -36,6 +36,8 @@ interface StyleSheetModifier {
 export interface CSSBuilder {
     deleteRule(index: number): void;
     insertRule(rule: string, index?: number): number;
+    // CSSKeyframesRule has appendRule instead of insertRule.
+    appendRule?(rule: string): void;
     cssRules: {
         readonly length: number;
         [index: number]: CSSBuilder | object;
@@ -75,7 +77,44 @@ export function createStyleSheetModifier(): StyleSheetModifier {
             const {containerName, containerQuery} = rule.parentRule;
             key = `${getCSSTextKey(`${containerName} ${containerQuery}`)}{${key}}`;
         }
+        // Keyframe bodies repeat across animations (`0% { background-color: white }`).
+        // Include the parent so those rules do not share one cached result.
+        if (isKeyframesRule(rule.parentRule)) {
+            key = `${getCSSTextKey(rule.parentRule.cssText)}{${key}}`;
+        }
         return key;
+    }
+
+    function keyframeSelector(rule: CSSStyleRule): string {
+        return (rule as unknown as CSSKeyframeRule).keyText || '';
+    }
+
+    function declarationWasModified(modRule: ModifiableCSSRule | null): boolean {
+        if (!modRule) {
+            return false;
+        }
+        return modRule.declarations.some((dec) => typeof dec.value === 'function' || dec.value !== dec.sourceValue);
+    }
+
+    // A later @keyframes with the same name replaces the whole animation, so every
+    // keyframe has to be copied, including properties that are not colors.
+    function withOriginalKeyframeDeclarations(rule: CSSStyleRule, mods: ModifiableCSSDeclaration[]): ModifiableCSSDeclaration[] {
+        const merged = new Map<string, ModifiableCSSDeclaration>();
+        for (let i = 0; i < rule.style.length; i++) {
+            const property = rule.style.item(i);
+            const value = rule.style.getPropertyValue(property).trim();
+            if (!value) {
+                continue;
+            }
+            merged.set(property, {
+                property,
+                value,
+                important: rule.style.getPropertyPriority(property) === 'important',
+                sourceValue: value,
+            });
+        }
+        mods.forEach((mod) => merged.set(mod.property, mod));
+        return Array.from(merged.values());
     }
 
     const rulesTextCache = new Set<string>();
@@ -102,6 +141,25 @@ export function createStyleSheetModifier(): StyleSheetModifier {
         }
 
         const modRules: ModifiableCSSRule[] = [];
+        const keyframesGroups = new Map<CSSKeyframesRule, {rules: ModifiableCSSRule[]; changed: boolean}>();
+
+        function trackKeyframe(rule: CSSStyleRule, modRule: ModifiableCSSRule | null, changed: boolean): boolean {
+            const parent = rule.parentRule;
+            if (!isKeyframesRule(parent) || !modRule) {
+                return false;
+            }
+            let group = keyframesGroups.get(parent);
+            if (!group) {
+                group = {rules: [], changed: false};
+                keyframesGroups.set(parent, group);
+            }
+            if (changed) {
+                group.changed = true;
+            }
+            group.rules.push(modRule);
+            return true;
+        }
+
         iterateCSSRules(rules, (rule) => {
             const key = getStyleRuleKey(rule);
             let textDiffersFromPrev = false;
@@ -112,12 +170,15 @@ export function createStyleSheetModifier(): StyleSheetModifier {
                 textDiffersFromPrev = true;
             }
 
-            if (textDiffersFromPrev) {
-                rulesChanged = true;
-            } else {
-                modRules.push(rulesModCache.get(key)!);
+            if (!textDiffersFromPrev) {
+                const cached = rulesModCache.get(key) ?? null;
+                if (!trackKeyframe(rule, cached, declarationWasModified(cached))) {
+                    modRules.push(cached!);
+                }
                 return;
             }
+
+            rulesChanged = true;
 
             // A very specific case to skip. This causes a lot of calls to `getModifiableCSSDeclaration`
             // and currently contributes nothing in real-world case.
@@ -134,15 +195,25 @@ export function createStyleSheetModifier(): StyleSheetModifier {
                 }
             });
 
+            const inKeyframe = isKeyframesRule(rule.parentRule);
+            const selector = rule.selectorText || (inKeyframe ? keyframeSelector(rule) : '');
+            const declarations = inKeyframe ? withOriginalKeyframeDeclarations(rule, modDecs) : modDecs;
             let modRule: ModifiableCSSRule | null = null;
-            if (modDecs.length > 0) {
-                const parentRule = rule.parentRule!;
-                modRule = {selector: rule.selectorText, declarations: modDecs, parentRule};
-                modRules.push(modRule);
+            if (selector && declarations.length > 0 && (modDecs.length > 0 || inKeyframe)) {
+                modRule = {selector, declarations, parentRule: rule.parentRule!};
             }
             rulesModCache.set(key, modRule!);
+            if (!trackKeyframe(rule, modRule, modDecs.length > 0) && modRule) {
+                modRules.push(modRule);
+            }
         }, () => {
             hasNonLoadedLink = true;
+        });
+
+        keyframesGroups.forEach((group) => {
+            if (group.changed) {
+                modRules.push(...group.rules);
+            }
         });
 
         notFoundCacheKeys.forEach((key) => {
@@ -209,7 +280,11 @@ export function createStyleSheetModifier(): StyleSheetModifier {
             }
             ruleText += ' }';
 
-            target.insertRule(ruleText, index);
+            if (typeof target.appendRule === 'function') {
+                target.appendRule(ruleText);
+            } else {
+                target.insertRule!(ruleText, index);
+            }
         }
 
         interface RuleInfo {
@@ -352,6 +427,12 @@ export function createStyleSheetModifier(): StyleSheetModifier {
                     const index = parent.cssRules.length;
                     const query = containerName ? `${containerName} ${containerQuery}` : containerQuery;
                     parent.insertRule(`@container ${query} {}`, index);
+                    return parent.cssRules[index] as CSSBuilder;
+                }
+                if (isKeyframesRule(rule)) {
+                    const index = parent.cssRules.length;
+                    const prefix = rule.cssText.startsWith('@-webkit-keyframes') ? '@-webkit-keyframes' : '@keyframes';
+                    parent.insertRule(`${prefix} ${CSS.escape(rule.name)} {}`, index);
                     return parent.cssRules[index] as CSSBuilder;
                 }
                 return parent;
