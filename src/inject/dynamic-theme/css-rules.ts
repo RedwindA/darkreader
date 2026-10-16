@@ -282,7 +282,7 @@ export function isLayerRule(rule: CSSRule | null): rule is CSSLayerBlockRule {
 }
 
 export function isKeyframesRule(rule: CSSRule | null): rule is CSSKeyframesRule {
-    return !!rule && rule.type === CSSRule.KEYFRAMES_RULE;
+    return rule !== null && rule.type === CSSRule.KEYFRAMES_RULE;
 }
 
 export function isContainerRule(rule: CSSRule | null): rule is CSSContainerRule {
